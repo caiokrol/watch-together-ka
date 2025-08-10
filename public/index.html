@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Controle - Watch Together</title>
+</head>
+<body>
+  <h1>Controle do Vídeo</h1>
+  <div id="player"></div>
+  <button onclick="playVideo()">Play</button>
+  <button onclick="pauseVideo()">Pause</button>
+  <button onclick="seek(60)">Ir para 1 min</button>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="script.js"></script>
+  <script>
+    const isOwner = true; // Aqui é você
+  </script>
+</body>
+</html>

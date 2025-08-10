@@ -1,0 +1,25 @@
+{
+  "name": "watch-together-ka",
+  "version": "1.0.0",
+  "description": "A site to watch gdrive-stored videos with other persons remotely, just owner can pause and play",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/caiokrol/watch-together-ka.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/caiokrol/watch-together-ka/issues"
+  },
+  "homepage": "https://github.com/caiokrol/watch-together-ka#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  }
+}
