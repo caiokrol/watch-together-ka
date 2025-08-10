@@ -5,21 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizador de Vídeo</title>
     <style>
-        body { font-family: sans-serif; background-color: #222; text-align: center; margin: 0; }
-        video { width: 100vw; height: 100vh; }
+        body { 
+            font-family: sans-serif; 
+            background-color: #000; 
+            text-align: center; 
+            margin: 0;
+            overflow: hidden; /* Evita barras de rolagem */
+        }
+        
+        #videoPlayer { 
+            width: 100vw; 
+            height: 100vh;
+            /* Começa invisível para não atrapalhar o overlay */
+            visibility: hidden;
+        }
+
+        #joinOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            cursor: pointer;
+        }
+
+        #joinOverlay h1 {
+            font-size: 2.5em;
+        }
+
+        #joinOverlay button {
+            font-size: 1.5em;
+            padding: 15px 30px;
+            border: 2px solid white;
+            background-color: transparent;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #joinOverlay button:hover {
+            background-color: white;
+            color: black;
+        }
     </style>
 </head>
 <body>
-    <video id="videoPlayer" src="https://private-films.s3.sa-east-1.amazonaws.com/2025-06-21+14-58-36.mp4"></video>
+
+    <div id="joinOverlay">
+        <h1>Sessão de Vídeo Sincronizado</h1>
+        <p>Clique abaixo para entrar e habilitar o som.</p>
+        <button id="joinBtn">Entrar na Sessão</button>
+    </div>
+
+    <video id="videoPlayer" src="URL_DO_SEU_VIDEO_NO_S3"></video>
     
     <script src="/socket.io/socket.io.js"></script>
     <script>
         // Conecta ao nosso servidor Socket.IO
         const socket = io();
 
-        // Pega o elemento de vídeo
+        // Pega os elementos do HTML
         const video = document.getElementById('videoPlayer');
+        const joinOverlay = document.getElementById('joinOverlay');
+        const joinBtn = document.getElementById('joinBtn');
 
+        // --- LÓGICA PARA HABILITAR O AUTOPLAY ---
+        joinBtn.addEventListener('click', () => {
+            // Esconde o overlay
+            joinOverlay.style.display = 'none';
+            // Torna o vídeo visível
+            video.style.visibility = 'visible';
+            
+            // Tenta dar um play "fantasma" e pausa. Isso "prepara" o player.
+            // O mais importante é que a interação do usuário já aconteceu.
+            video.play().then(() => {
+                video.pause();
+                console.log("Permissão de autoplay concedida pelo usuário.");
+            }).catch(error => {
+                console.log("O navegador bloqueou o play inicial, mas a interação foi registrada:", error);
+            });
+        });
+
+        // --- LÓGICA DE SINCRONIZAÇÃO (permanece a mesma) ---
         // Ouve os eventos vindos do servidor
         socket.on('play', () => {
             console.log("Comando 'play' recebido!");
@@ -33,9 +107,9 @@
 
         socket.on('sync', (time) => {
             console.log(`Comando 'sync' recebido! Ajustando para ${time}s.`);
-            // Ajusta o tempo do vídeo para o tempo recebido do controlador
             video.currentTime = time;
-            // Dá play para garantir que está no mesmo estado do controlador
+            // É uma boa prática garantir que o vídeo toque após a ressincronização
+            // caso o controlador esteja com o play ativo.
             video.play();
         });
     </script>
