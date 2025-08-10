@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizador de Vídeo</title>
+    <title>Nossa Sala de Cinema ❤️</title>
     <style>
         body { 
             font-family: sans-serif; 
             background-color: #000; 
             text-align: center; 
             margin: 0;
-            overflow: hidden; /* Evita barras de rolagem */
+            overflow: hidden;
         }
         
         #videoPlayer { 
             width: 100vw; 
             height: 100vh;
-            /* Começa invisível para não atrapalhar o overlay */
-            visibility: hidden;
         }
 
         #joinOverlay {
@@ -33,11 +31,16 @@
             justify-content: center;
             align-items: center;
             z-index: 10;
-            cursor: pointer;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         #joinOverlay h1 {
-            font-size: 2.5em;
+            font-size: 2.2em;
+        }
+
+        #joinOverlay p {
+            font-size: 1.1em;
         }
 
         #joinOverlay button {
@@ -48,68 +51,92 @@
             color: white;
             cursor: pointer;
             transition: background-color 0.3s, color 0.3s;
+            margin-top: 30px;
         }
 
         #joinOverlay button:hover {
             background-color: white;
             color: black;
         }
+
+        /* --- ESTILOS PARA A GALERIA DE FOTOS --- */
+        .photo-gallery {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap; /* Para telas menores, as fotos quebram a linha */
+            gap: 25px; /* Espaço entre as fotos */
+            margin-top: 30px;
+        }
+
+        .polaroid {
+            width: 120px; /* Largura da foto */
+            height: 120px; /* Altura da foto */
+            object-fit: cover; /* Garante que a foto não fique distorcida */
+            border: 8px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease;
+        }
+
+        /* Efeito de hover para dar um charme */
+        .polaroid:hover {
+            transform: scale(1.15) rotate(0deg) !important; /* Aumenta e endireita a foto */
+            z-index: 20;
+        }
+
+        /* Rotações diferentes para cada foto */
+        .polaroid:nth-child(1) { transform: rotate(-8deg); }
+        .polaroid:nth-child(2) { transform: rotate(5deg); }
+        .polaroid:nth-child(3) { transform: rotate(-3deg); }
+        .polaroid:nth-child(4) { transform: rotate(7deg); }
+
     </style>
 </head>
 <body>
 
     <div id="joinOverlay">
-        <h1>Sessão de Vídeo Sincronizado</h1>
-        <p>Clique abaixo para entrar e habilitar o som.</p>
-        <button id="joinBtn">Entrar na Sessão</button>
+        <h1>Bem vinda a sala de cinema do mozi</h1>
+        <p>Clica aqui em baixo pra ver um filminho comigo.</p>
+
+        <div class="photo-gallery">
+            <img src="https://private-films.s3.sa-east-1.amazonaws.com/IMG_2231.jpg" alt="Nossa foto 1" class="polaroid">
+            <img src="https://private-films.s3.sa-east-1.amazonaws.com/IMG_4434.jpg" alt="Nossa foto 2" class="polaroid">
+            <img src="https://private-films.s3.sa-east-1.amazonaws.com/IMG_5144.jpg" alt="Nossa foto 3" class="polaroid">
+            <img src="https://private-films.s3.sa-east-1.amazonaws.com/IMG_5255.jpg" alt="Nossa foto 4" class="polaroid">
+        </div>
+        <button id="joinBtn">Eu amo o mozi</button>
     </div>
 
     <video id="videoPlayer" src="https://private-films.s3.sa-east-1.amazonaws.com/2025-06-21+14-58-36.mp4"></video>
     
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Conecta ao nosso servidor Socket.IO
+        // Script otimizado para não dar erro
         const socket = io();
-
-        // Pega os elementos do HTML
         const video = document.getElementById('videoPlayer');
         const joinOverlay = document.getElementById('joinOverlay');
         const joinBtn = document.getElementById('joinBtn');
 
-        // --- LÓGICA PARA HABILITAR O AUTOPLAY ---
         joinBtn.addEventListener('click', () => {
-            // Esconde o overlay
+            console.log("Botão 'Entrar' clicado. Revelando vídeo...");
             joinOverlay.style.display = 'none';
-            // Torna o vídeo visível
-            video.style.visibility = 'visible';
-            
-            // Tenta dar um play "fantasma" e pausa. Isso "prepara" o player.
-            // O mais importante é que a interação do usuário já aconteceu.
-            video.play().then(() => {
-                video.pause();
-                console.log("Permissão de autoplay concedida pelo usuário.");
-            }).catch(error => {
-                console.log("O navegador bloqueou o play inicial, mas a interação foi registrada:", error);
-            });
+            console.log("Overlay escondido. Aguardando eventos do servidor...");
         });
 
-        // --- LÓGICA DE SINCRONIZAÇÃO (permanece a mesma) ---
-        // Ouve os eventos vindos do servidor
+        socket.on('connect', () => {
+            console.log('Conectado ao servidor com o ID:', socket.id);
+        });
         socket.on('play', () => {
             console.log("Comando 'play' recebido!");
             video.play();
         });
-
         socket.on('pause', () => {
             console.log("Comando 'pause' recebido!");
             video.pause();
         });
-
         socket.on('sync', (time) => {
             console.log(`Comando 'sync' recebido! Ajustando para ${time}s.`);
             video.currentTime = time;
-            // É uma boa prática garantir que o vídeo toque após a ressincronização
-            // caso o controlador esteja com o play ativo.
             video.play();
         });
     </script>
