@@ -1,42 +1,50 @@
-let player;
 const socket = io();
+let player;
+let isOwner = window.isOwner || false;
 
-function onYouTubeIframeAPIReady() {
-  player = new YT.Player('player', {
-    height: '390',
-    width: '640',
-    videoId: 'maYVAFdbBv4', // Seu vídeo
-    events: {
-      onReady: () => console.log("Pronto"),
+window.onload = () => {
+  player = videojs("videoPlayer");
+
+  socket.on("connect", () => {
+    console.log("Socket conectado, id:", socket.id);
+  });
+  
+
+  if (isOwner) {
+    socket.emit("register-owner");
+  } else {
+    // Espectador: desabilitar controles para não interferir
+    player.controlBar.disable();
+    player.controls(false);
+  }
+
+  if (isOwner) {
+    player.on("play", () => {
+      socket.emit("control-event", { type: "play" });
+    });
+
+    player.on("pause", () => {
+      socket.emit("control-event", { type: "pause" });
+    });
+
+    player.on("seeked", () => {
+      socket.emit("control-event", { type: "seek", time: player.currentTime() });
+    });
+  }
+
+  socket.on("control-event", (data) => {
+    if (!isOwner) {
+      switch (data.type) {
+        case "play":
+          player.play();
+          break;
+        case "pause":
+          player.pause();
+          break;
+        case "seek":
+          player.currentTime(data.time);
+          break;
+      }
     }
   });
-}
-
-function playVideo() {
-  if (isOwner) {
-    player.playVideo();
-    socket.emit("control", { action: "play" });
-  }
-}
-
-function pauseVideo() {
-  if (isOwner) {
-    player.pauseVideo();
-    socket.emit("control", { action: "pause" });
-  }
-}
-
-function seek(seconds) {
-  if (isOwner) {
-    player.seekTo(seconds, true);
-    socket.emit("control", { action: "seek", time: seconds });
-  }
-}
-
-socket.on("action", (data) => {
-  if (!isOwner) {
-    if (data.action === "play") player.playVideo();
-    if (data.action === "pause") player.pauseVideo();
-    if (data.action === "seek") player.seekTo(data.time, true);
-  }
-});
+};

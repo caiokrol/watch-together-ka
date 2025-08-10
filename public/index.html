@@ -1,21 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-  <meta charset="utf-8">
-  <title>Controle - Watch Together</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controlador de Vídeo</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f0f0f0; text-align: center; padding-top: 20px; }
+        video { max-width: 80%; border: 2px solid #333; }
+        .controls button { font-size: 1.2em; padding: 10px 20px; margin: 10px; cursor: pointer; }
+    </style>
 </head>
 <body>
-  <h1>Controle do Vídeo</h1>
-  <div id="player"></div>
-  <button onclick="playVideo()">Play</button>
-  <button onclick="pauseVideo()">Pause</button>
-  <button onclick="seek(60)">Ir para 1 min</button>
+    <h1>Página do Controlador</h1>
+    
+    <video id="videoPlayer" src="https://private-films.s3.sa-east-1.amazonaws.com/2025-06-21+14-58-36.mp4" controls></video>
+    
+    <div class="controls">
+        <button id="playBtn">Play em Todos</button>
+        <button id="pauseBtn">Pause em Todos</button>
+        <button id="syncBtn">Ressincronizar Todos</button>
+    </div>
 
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="script.js"></script>
-  <script>
-    const isOwner = true; // Aqui é você
-  </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Conecta ao nosso servidor Socket.IO
+        const socket = io();
+
+        // Pega os elementos do HTML
+        const video = document.getElementById('videoPlayer');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const syncBtn = document.getElementById('syncBtn');
+
+        // Event Listeners para os botões
+        playBtn.addEventListener('click', () => {
+            video.play(); // Toca o vídeo localmente
+            socket.emit('play'); // Envia o evento 'play' para o servidor
+        });
+
+        pauseBtn.addEventListener('click', () => {
+            video.pause(); // Pausa o vídeo localmente
+            socket.emit('pause'); // Envia o evento 'pause' para o servidor
+        });
+
+        syncBtn.addEventListener('click', () => {
+            const currentTime = video.currentTime;
+            // Envia o evento 'sync' com o tempo atual do vídeo para o servidor
+            socket.emit('sync', currentTime);
+            video.pause();
+            socket.emit('pause');
+        });
+
+        // Bônus: Se você usar os controles nativos do player, também emitirá os eventos
+        video.addEventListener('play', () => {
+            socket.emit('play');
+        });
+
+        video.addEventListener('pause', () => {
+            socket.emit('pause');
+        });
+
+    </script>
 </body>
 </html>
