@@ -12,12 +12,46 @@
             margin: 0;
             overflow: hidden;
         }
+
+        /* NOVO: Container para posicionar o botão sobre o vídeo */
+        .video-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-color: #000;
+        }
         
         #videoPlayer { 
-            width: 100vw; 
-            height: 100vh;
+            width: 100%; 
+            height: 100%;
         }
 
+        /* --- ESTILOS DO BOTÃO DE FULLSCREEN CUSTOMIZADO --- */
+        #customFullscreenBtn {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.5);
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 21; /* Garante que fique sobre tudo */
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        #customFullscreenBtn:hover {
+            opacity: 1;
+        }
+
+        #customFullscreenBtn svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+        
+        /* Overlay e galeria permanecem os mesmos */
         #joinOverlay {
             position: fixed;
             top: 0;
@@ -30,19 +64,13 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 10;
+            z-index: 30;
             padding: 20px;
             box-sizing: border-box;
         }
 
-        #joinOverlay h1 {
-            font-size: 2.2em;
-        }
-
-        #joinOverlay p {
-            font-size: 1.1em;
-        }
-
+        #joinOverlay h1 { font-size: 2.2em; }
+        #joinOverlay p { font-size: 1.1em; }
         #joinOverlay button {
             font-size: 1.5em;
             padding: 15px 30px;
@@ -53,38 +81,24 @@
             transition: background-color 0.3s, color 0.3s;
             margin-top: 30px;
         }
-
-        #joinOverlay button:hover {
-            background-color: white;
-            color: black;
-        }
-
-        /* --- ESTILOS PARA A GALERIA DE FOTOS --- */
+        #joinOverlay button:hover { background-color: white; color: black; }
         .photo-gallery {
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-wrap: wrap; /* Para telas menores, as fotos quebram a linha */
-            gap: 25px; /* Espaço entre as fotos */
+            flex-wrap: wrap;
+            gap: 25px;
             margin-top: 30px;
         }
-
         .polaroid {
-            width: 120px; /* Largura da foto */
-            height: 120px; /* Altura da foto */
-            object-fit: cover; /* Garante que a foto não fique distorcida */
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
             border: 8px solid white;
             box-shadow: 0 5px 15px rgba(0,0,0,0.4);
             transition: transform 0.3s ease;
         }
-
-        /* Efeito de hover para dar um charme */
-        .polaroid:hover {
-            transform: scale(1.15) rotate(0deg) !important; /* Aumenta e endireita a foto */
-            z-index: 20;
-        }
-
-        /* Rotações diferentes para cada foto */
+        .polaroid:hover { transform: scale(1.15) rotate(0deg) !important; z-index: 20; }
         .polaroid:nth-child(1) { transform: rotate(-8deg); }
         .polaroid:nth-child(2) { transform: rotate(5deg); }
         .polaroid:nth-child(3) { transform: rotate(-3deg); }
@@ -97,7 +111,6 @@
     <div id="joinOverlay">
         <h1>Bem vinda a sala de cinema do mozi</h1>
         <p>Clica aqui em baixo pra ver um filminho comigo.</p>
-
         <div class="photo-gallery">
             <img src="https://private-films.s3.sa-east-1.amazonaws.com/IMG_2231.jpg" alt="Nossa foto 1" class="polaroid">
             <img src="https://private-films.s3.sa-east-1.amazonaws.com/IMG_4434.jpg" alt="Nossa foto 2" class="polaroid">
@@ -107,33 +120,49 @@
         <button id="joinBtn">Eu amo o mozi</button>
     </div>
 
-    <video id="videoPlayer" src="https://private-films.s3.sa-east-1.amazonaws.com/2025-06-21+14-58-36.mp4"></video>
+    <div class="video-container">
+        <video id="videoPlayer" src="https://private-films.s3.sa-east-1.amazonaws.com/2025-06-21+14-58-36.mp4"></video>
+        
+        <button id="customFullscreenBtn" title="Tela Cheia">
+            <svg viewBox="0 0 36 36"><g fill-rule="evenodd"><path d="M31.5 23.5h-4v4h4v-4zm-6 0h-4v4h4v-4zm-6 0h-4v4h4v-4zm-6 0H9.5v4h4v-4zM21.5 8.5h-4v4h4v-4zm-6 0h-4v4h4v-4zm12 0h-4v4h4v-4zM9.5 8.5h-4v4h4v-4z"></path><path d="M34 6.5v23H2v-23h32zm-2 2H4v19h28V8.5z"></path></g></svg>
+        </button>
+    </div>
     
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Script otimizado para não dar erro
         const socket = io();
         const video = document.getElementById('videoPlayer');
         const joinOverlay = document.getElementById('joinOverlay');
         const joinBtn = document.getElementById('joinBtn');
+        // MUDANÇA: Pega as referências do novo botão e do container
+        const fullscreenBtn = document.getElementById('customFullscreenBtn');
+        const videoContainer = document.querySelector('.video-container');
 
         joinBtn.addEventListener('click', () => {
-            console.log("Botão 'Entrar' clicado. Revelando vídeo...");
             joinOverlay.style.display = 'none';
-            console.log("Overlay escondido. Aguardando eventos do servidor...");
         });
 
-        socket.on('connect', () => {
-            console.log('Conectado ao servidor com o ID:', socket.id);
+        // MUDANÇA: Adiciona a lógica de clique para o novo botão
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                if (videoContainer.requestFullscreen) {
+                    videoContainer.requestFullscreen();
+                } else if (videoContainer.webkitRequestFullscreen) { /* Safari */
+                    videoContainer.webkitRequestFullscreen();
+                } else if (videoContainer.msRequestFullscreen) { /* IE11 */
+                    videoContainer.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
         });
-        socket.on('play', () => {
-            console.log("Comando 'play' recebido!");
-            video.play();
-        });
-        socket.on('pause', () => {
-            console.log("Comando 'pause' recebido!");
-            video.pause();
-        });
+
+        // Lógica de sincronização (sem alterações)
+        socket.on('connect', () => { console.log('Conectado ao servidor com o ID:', socket.id); });
+        socket.on('play', () => { console.log("Comando 'play' recebido!"); video.play(); });
+        socket.on('pause', () => { console.log("Comando 'pause' recebido!"); video.pause(); });
         socket.on('sync', (time) => {
             console.log(`Comando 'sync' recebido! Ajustando para ${time}s.`);
             video.currentTime = time;
